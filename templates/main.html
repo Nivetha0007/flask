@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShopSmart - Your Shopping Destination</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="header-top">
+          <div class="logo">
+            <h1>ShopSmart</h1>
+          </div>
+          <nav>
+            <ul>
+              <li>
+                <a href="#" class="active" onclick="loadCategory('all')"
+                  >Home</a
+                >
+              </li>
+              <li>
+                <a href="#" id="student-link" onclick="loadCategory('student')"
+                  >Student</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  id="tech-link"
+                  onclick="loadCategory('tech enthusiast')"
+                  >Tech</a
+                >
+              </li>
+              <li>
+                <a href="#" id="casual-link" onclick="loadCategory('casual')"
+                  >Casual</a
+                >
+              </li>
+              <li>
+                <a href="#" id="teacher-link" onclick="loadCategory('teacher')"
+                  >Teacher</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  id="business-link"
+                  onclick="loadCategory('business')"
+                  >Business</a
+                >
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <div class="header-bottom">
+          <div class="search-bar">
+            <input
+              type="text"
+              id="search-input"
+              placeholder="Search products..."
+            />
+            <button class="search-btn" onclick="searchProducts()">
+              Search
+            </button>
+          </div>
+          <div class="user-controls">
+            <div class="user-info">
+              <span id="username">{{ user }}</span>
+              <div class="dropdown">
+                <button class="dropbtn">User Type</button>
+                <div class="dropdown-content">
+                  <a href="#" onclick="changeUserType('student')">Student</a>
+                  <a href="#" onclick="changeUserType('tech enthusiast')"
+                    >Tech Enthusiast</a
+                  >
+                  <a href="#" onclick="changeUserType('casual')">Casual</a>
+                  <a href="#" onclick="changeUserType('teacher')">Teacher</a>
+                  <a href="#" onclick="changeUserType('business')">Business</a>
+                </div>
+              </div>
+            </div>
+            <div class="cart">
+              <a href="/cart?user={{ user }}" id="cart-link"
+                >Cart (<span id="cart-count">0</span>)</a
+              >
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <section class="hero">
+          <div class="hero-content">
+            <h2>Welcome to ShopSmart</h2>
+            <p class="hero-text">Discover products tailored just for you</p>
+          </div>
+        </section>
+
+        <section class="recommended">
+          <h2>Recommended For You</h2>
+          <div class="carousel" id="recommended-products">
+            <!-- Recommendations will be loaded here -->
+          </div>
+        </section>
+
+        <section class="products" id="products-section">
+          <h2 id="category-title">All Products</h2>
+          <div class="product-grid" id="products-container">
+            <!-- Products will be loaded here -->
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div id="product-modal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">×</span>
+        <div class="product-details">
+          <div class="product-image">
+            <img id="modal-product-image" src="" alt="Product Image" />
+          </div>
+          <div class="product-info">
+            <h2 id="modal-product-name"></h2>
+            <p id="modal-product-category" class="category-text"></p>
+            <p id="modal-product-description" class="description-text"></p>
+            <div class="price-container">
+              <span id="modal-product-price" class="price-text"></span>
+            </div>
+            <button id="add-to-cart-btn" class="btn" onclick="addToCart()">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+        <div class="similar-products">
+          <h3>Explore Similar Items</h3>
+          <div class="carousel" id="similar-products">
+            <!-- Similar products will be loaded here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="container">
+        <p>© 2025 ShopSmart. All rights reserved.</p>
+        <div class="social-links">
+          <a href="#" class="social-icon">FB</a>
+          <a href="#" class="social-icon">TW</a>
+          <a href="#" class="social-icon">IG</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const user = "{{ user }}";
+      let currentProductId = null;
+
+      function initializePage() {
+        console.log("Initializing page for user:", user);
+        loadCategory("all");
+        loadRecommendations();
+        updateCartCount();
+      }
+
+      function loadCategory(category) {
+        fetch(`/products?category=${category}`)
+          .then((response) => {
+            if (!response.ok) throw new Error("Failed to fetch products");
+            return response.json();
+          })
+          .then((products) => {
+            console.log(`Loaded ${category} products:`, products);
+            const container = document.getElementById("products-container");
+            container.innerHTML = "";
+            document.getElementById("category-title").textContent =
+              category === "all"
+                ? "All Products"
+                : `${
+                    category.charAt(0).toUpperCase() + category.slice(1)
+                  } Products`;
+            if (products.length === 0) {
+              container.innerHTML = "<p>No products available.</p>";
+            } else {
+              products.forEach((product) =>
+                container.appendChild(createProductCard(product))
+              );
+            }
+          })
+          .catch((error) => console.error("Error loading category:", error));
+      }
+
+      function loadRecommendations() {
+        fetch(`/recommend?user=${user}`)
+          .then((response) => {
+            if (!response.ok)
+              throw new Error("Failed to fetch recommendations");
+            return response.json();
+          })
+          .then((products) => {
+            console.log("Loaded recommendations:", products);
+            const container = document.getElementById("recommended-products");
+            container.innerHTML = "";
+            if (products.length === 0) {
+              container.innerHTML = "<p>No recommendations available.</p>";
+            } else {
+              products.forEach((product) =>
+                container.appendChild(createProductCard(product))
+              );
+            }
+          })
+          .catch((error) =>
+            console.error("Error loading recommendations:", error)
+          );
+      }
+
+      function createProductCard(product) {
+        const card = document.createElement("div");
+        card.classList.add("product-card");
+        card.dataset.productId = product.id;
+        card.innerHTML = `
+          <div class="product-image">
+            <img src="${product.image}" alt="${product.name}">
+          </div>
+          <div class="product-details">
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-category">${product.category}</p>
+            <p class="product-price">$${product.price.toFixed(2)}</p>
+            <button class="quick-view-btn" onclick="openModal(${
+              product.id
+            }); event.stopPropagation()">Quick View</button>
+          </div>
+        `;
+        card.addEventListener("click", () => openModal(product.id));
+        return card;
+      }
+
+      function openModal(productId) {
+        currentProductId = productId;
+        fetch(`/product/${productId}?user=${user}`, { method: "POST" })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Product data for modal:", data);
+            const product = data.product;
+            document.getElementById("modal-product-image").src = product.image;
+            document.getElementById("modal-product-name").textContent =
+              product.name;
+            document.getElementById(
+              "modal-product-category"
+            ).textContent = `${product.category} > ${product.subCategory}`;
+            document.getElementById("modal-product-description").textContent =
+              product.description;
+            document.getElementById(
+              "modal-product-price"
+            ).textContent = `$${product.price.toFixed(2)}`;
+            document.getElementById("product-modal").style.display = "block";
+            document.body.style.overflow = "hidden";
+            const similarContainer =
+              document.getElementById("similar-products");
+            similarContainer.innerHTML = "";
+            data.similar.forEach((p) =>
+              similarContainer.appendChild(createProductCard(p))
+            );
+          })
+          .catch((error) => console.error("Error opening modal:", error));
+      }
+
+      function closeModal() {
+        document.getElementById("product-modal").style.display = "none";
+        document.body.style.overflow = "auto";
+        currentProductId = null;
+      }
+
+      function addToCart() {
+        if (currentProductId) {
+          fetch(`/cart/add?user=${user}&product_id=${currentProductId}`, {
+            method: "POST",
+          })
+            .then(() => {
+              updateCartCount();
+              const btn = document.getElementById("add-to-cart-btn");
+              btn.textContent = "Added to Cart!";
+              btn.disabled = true;
+              setTimeout(() => {
+                btn.textContent = "Add to Cart";
+                btn.disabled = false;
+              }, 2000);
+            })
+            .catch((error) => console.error("Error adding to cart:", error));
+        }
+      }
+
+      function updateCartCount() {
+        fetch(`/cart/count?user=${user}`)
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("cart-count").textContent = data.count;
+          })
+          .catch((error) => console.error("Error updating cart count:", error));
+      }
+
+      function changeUserType(type) {
+        fetch(`/user/update?user=${user}&type=${type}`, { method: "POST" })
+          .then(() => {
+            document.getElementById("username").textContent =
+              user + " (" + type.charAt(0).toUpperCase() + type.slice(1) + ")";
+            loadRecommendations();
+          })
+          .catch((error) => console.error("Error changing user type:", error));
+      }
+
+      function logout() {
+        localStorage.removeItem("current_user");
+        window.location.href = "/";
+      }
+
+      function searchProducts() {
+        const query = document
+          .getElementById("search-input")
+          .value.trim()
+          .toLowerCase();
+        if (!query) {
+          loadCategory("all");
+          return;
+        }
+        fetch(`/search?query=${encodeURIComponent(query)}`)
+          .then((response) => response.json())
+          .then((products) => {
+            console.log("Search results:", products);
+            const container = document.getElementById("products-container");
+            container.innerHTML = "";
+            document.getElementById(
+              "category-title"
+            ).textContent = `Search Results for "${query}"`;
+            if (products.length === 0) {
+              container.innerHTML = "<p>No products found.</p>";
+            } else {
+              products.forEach((product) =>
+                container.appendChild(createProductCard(product))
+              );
+            }
+          })
+          .catch((error) => console.error("Error searching products:", error));
+      }
+
+      document.addEventListener("DOMContentLoaded", initializePage);
+    </script>
+  </body>
+</html>

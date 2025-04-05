@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Cart - ShopSmart</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="logo">
+          <h1>ShopSmart</h1>
+        </div>
+        <nav>
+          <ul>
+            <li><a href="/main?user={{ user }}">Back to Shop</a></li>
+          </ul>
+        </nav>
+        <div class="user-controls">
+          <div class="user-info">
+            <span id="username">{{ user }}</span>
+          </div>
+          <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <section class="cart-section">
+          <h2>Your Cart</h2>
+          <div class="cart-items" id="cart-items">
+            {% if cart_items %} {% for item in cart_items %} {% set product =
+            products|selectattr('id', 'equalto', item.id)|first %}
+            <div class="cart-item">
+              <img src="{{ product.image }}" alt="{{ product.name }}" />
+              <div class="cart-item-details">
+                <h3>{{ product.name }}</h3>
+                <p>Price: ${{ product.price|round(2) }}</p>
+                <p>Quantity: {{ item.quantity }}</p>
+                <p>Total: ${{ (product.price * item.quantity)|round(2) }}</p>
+              </div>
+            </div>
+            {% endfor %} {% else %}
+            <p>Your cart is empty!</p>
+            {% endif %}
+          </div>
+          <div class="cart-total">
+            <h3>Total: $<span id="cart-total">{{ total|round(2) }}</span></h3>
+            <button
+              class="btn checkout-btn"
+              onclick="alert('Checkout feature coming soon!')"
+            >
+              Checkout
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>© 2025 ShopSmart. All rights reserved.</p>
+        <div class="social-links">
+          <a href="#" class="social-icon">FB</a>
+          <a href="#" class="social-icon">TW</a>
+          <a href="#" class="social-icon">IG</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      function logout() {
+        localStorage.removeItem("current_user");
+        window.location.href = "/";
+      }
+    </script>
+  </body>
+</html>

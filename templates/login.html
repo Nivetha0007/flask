@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - ShopSmart</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-box">
+        <h1 class="login-title">ShopSmart</h1>
+        <p class="login-subtitle">Sign in to your account</p>
+        <div class="login-form">
+          <div class="input-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+          <button class="login-btn" onclick="login()">Login</button>
+          <p class="register-text">
+            New here? <a href="#" onclick="register()">Register</a>
+          </p>
+        </div>
+      </div>
+    </div>
+    <script>
+      // Function to get users from localStorage
+      function getUsers() {
+        return JSON.parse(localStorage.getItem("shopsmart_users")) || {};
+      }
+
+      // Function to save users to localStorage
+      function saveUsers(users) {
+        localStorage.setItem("shopsmart_users", JSON.stringify(users));
+      }
+
+      function login() {
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        if (!email || !password) {
+          alert("Please fill in all fields!");
+          return;
+        }
+
+        // Always fetch the latest users from localStorage
+        const users = getUsers();
+
+        if (users[email]) {
+          if (users[email].password === password) {
+            localStorage.setItem("current_user", email);
+            window.location.href = `/main?user=${encodeURIComponent(email)}`;
+          } else {
+            alert("Incorrect password!");
+          }
+        } else {
+          alert("User not found! Please register.");
+        }
+      }
+
+      function register() {
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        if (!email || !password) {
+          alert("Please fill in all fields to register!");
+          return;
+        }
+
+        // Fetch current users
+        const users = getUsers();
+
+        if (users[email]) {
+          alert("User already exists! Please log in.");
+          return;
+        }
+
+        // Add new user
+        users[email] = {
+          password: password,
+          type: "casual", // Default type
+          cart: [],
+          view_history: [],
+        };
+        saveUsers(users);
+        localStorage.setItem("current_user", email);
+        alert("Registration successful! Logging you in...");
+        window.location.href = `/main?user=${encodeURIComponent(email)}`;
+      }
+    </script>
+  </body>
+</html>
